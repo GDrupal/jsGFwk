@@ -1,0 +1,365 @@
+<html>
+<head>
+</head>
+<script language="Javascript" src="../../../Framework/jsGFwk.js"></script>
+<script language="Javascript" src="../../../Framework/jsGFwkIO.js"></script>
+<script language="Javascript" src="../../../Framework/jsGFwkRM.js"></script>
+<script language="Javascript" src="../../../Framework/jsGFwkEffects.js"></script>
+<script language="Javascript" src="../../../Framework/jsGFwkCollisions.js"></script>
+<script language="Javascript" src="../../../Framework/jsGFwkDebugger.js"></script>
+<script language="Javascript" src="../../../Framework/jsGFwkContainer.js"></script>
+<script language="Javascript" src="Scripts/retriever.js"></script>
+<script language="Javascript" src="Scripts/hud.js"></script>
+<script language="Javascript" src="Scripts/fondo.js"></script>
+<script language="Javascript" src="Scripts/sol.js"></script>
+<script language="Javascript" src="Scripts/planetA.js"></script>
+<script language="Javascript" src="Scripts/planetB.js"></script>
+<script language="Javascript" src="Scripts/gravSol.js"></script>
+<script language="Javascript" src="Scripts/gravA.js"></script>
+<script language="Javascript" src="Scripts/gravB.js"></script>
+<script language="Javascript" src="Scripts/starField.js"></script>
+<script language="Javascript" src="Scripts/starFieldA.js"></script>
+<script language="Javascript" src="Scripts/starFieldB.js"></script>
+<script language="Javascript" src="Scripts/baseEspacial.js"></script>
+<script language="Javascript" src="Scripts/baseLander.js"></script>
+<script language="Javascript" src="Scripts/asteroide.js"></script>
+
+
+<body>
+	<canvas id="canvas" width="640" height="480"></canvas>
+</body>
+<script language="Javascript">
+	jsGFwk.settings.canvas = "canvas";
+	jsGFwk.settings.width = 640;
+	jsGFwk.settings.height = 480;
+	jsGFwk.settings.clearColor = "rgb(255,255,255)";
+			
+	//Include external component libraries
+	jsGFwk.include("IO");
+	jsGFwk.include("ResourceManager");
+	jsGFwk.include("Effects");
+	jsGFwk.include("Collisions");
+	jsGFwk.include("Debugger");
+	jsGFwk.include("Container");
+	
+	
+	jsGFwk.Debugger.on = true;
+	
+	//************************************
+
+	jsGFwk.ResourceManager.addGraphic({ name: "cuadradito", source: "Graphics/cuadradito.png" });
+	jsGFwk.ResourceManager.addGraphic({ name: "llama", source: "Graphics/llama.png" });
+	jsGFwk.ResourceManager.addGraphic({ name: "fondo", source: "Graphics/img.jpg" });
+	jsGFwk.ResourceManager.addGraphic({ name: "sol", source: "Graphics/planets.png" });
+	jsGFwk.ResourceManager.addGraphic({ name: "baseEspacial", source: "Graphics/baseEspacial.png" });
+	jsGFwk.ResourceManager.addGraphic({ name: "asteroide", source: "Graphics/asteroide.png" });
+	jsGFwk.ResourceManager.addGraphic({ name: "box", source: "Graphics/box.png" });
+	jsGFwk.ResourceManager.addGraphic({ name: "hull", source: "Graphics/hull.png" });
+
+
+	jsGFwk.ResourceManager.addSound({ name: "engine", source: "thruster.wav" });
+	
+	var GLOBALS = { 
+		CANVAS_SIZE : { width: 640, height: 480 },
+		SPEED: .1,
+		SPEED1: .5,
+		SPEED2: .5,
+	};
+	
+	
+	jsGFwk.createObject(starField);
+	jsGFwk.createObject(starFieldA);
+//	jsGFwk.createObject(starFieldB);	
+//	jsGFwk.createObject(fondo);
+	jsGFwk.createObject(sol);
+//	jsGFwk.createObject(planetA);
+//	jsGFwk.createObject(planetB);
+//	jsGFwk.createObject(objetivo);
+	jsGFwk.createObject(gravSol);
+//	jsGFwk.createObject(gravA);
+//	jsGFwk.createObject(gravB);
+//	jsGFwk.createObject(hud);	
+//	jsGFwk.createObject(objeto);	
+	//jsGFwk.createObject(baseEspacial);	
+	jsGFwk.createObject(baseLander);	
+	
+	/// Containers ///
+	
+	/// Asteroids
+	jsGFwk.Container.createContainer("asteroidContainer", {
+		onInit: function (initializationParameters) {
+			jsGFwk.Effects.onObjectCreated(this);
+			this.x = initializationParameters.x;
+			this.y = initializationParameters.y;
+			this.width = 14;
+			this.height = 14;
+			this.angle = 0;
+			this.radius = 10;
+			this.rotationPoint =  { x: 8, y: 8 };
+			this.rotVel = initializationParameters.rotVel;
+			this.negRot = initializationParameters.negRot;
+			this.center = { x: 8 , y: 8 }
+			this.roidVelX = 0;
+			this.roidVelY = 0;	
+			this.roidAccel = 0.001;
+			
+			
+		},
+		onUpdate: function (delta) {
+			
+			if 	(jsGFwk._gameObjects.retriever.isRectColliding(this)) {
+				jsGFwk._gameObjects.retriever.hull = jsGFwk._gameObjects.retriever.hull + 10;
+				this.destroy();
+			}
+			
+			if (jsGFwk._gameObjects.gravSol.isRadColliding(this)){
+				if (this.x > jsGFwk._gameObjects.sol.x){
+					this.roidVelX -= this.roidAccel * Math.cos(jsGFwk.Effects.degreeToRadians(jsGFwk._gameObjects.gravSol.gravAngle));
+				}else {	
+					this.roidVelX += this.roidAccel * Math.cos(jsGFwk.Effects.degreeToRadians(jsGFwk._gameObjects.gravSol.gravAngle));
+				}
+				if (this.y > jsGFwk._gameObjects.sol.y){
+					this.roidVelY = 1;
+					this.roidVelY -= this.roidAccel * Math.cos(jsGFwk.Effects.degreeToRadians(jsGFwk._gameObjects.gravSol.gravAngle));
+				}else {
+					this.roidVelY = 1;
+					this.roidVelY += this.roidAccel * Math.cos(jsGFwk.Effects.degreeToRadians(jsGFwk._gameObjects.gravSol.gravAngle));
+				}
+				
+			}
+
+		
+			if (this.negRot <= 5){
+				if (this.rotVel < 6){
+					this.roidVelX = 0.5;
+					this.x += this.roidVelX; 
+					this.y += this.roidVelY; 
+
+				}else if (this.rotVel >= 6 && this.rotVel <= 12){					
+					this.roidVelX = 1;
+					this.x += this.roidVelX; 
+					this.y += this.roidVelY; 
+				}else if (this.rotVel > 12){
+					this.roidVelX = 1.5;
+					this.x += this.roidVelX; 
+					this.y += this.roidVelY; 
+				}
+				
+				
+				if (this.x >= 640){
+						this.x = 1;
+				}
+			}else {
+				if (this.rotVel < 6){
+					this.x -= 0.5; 
+					
+				}else if (this.rotVel >= 6 && this.rotVel <= 12){
+					this.x -= 1;
+				}else if (this.rotVel > 12){
+					this.x -= 1.5;
+				}
+				
+				if (this.x <= 0){
+						this.x = 639;
+				}
+			}
+			
+			
+			if (this.negRot <= 5){
+				this.angle += this.rotVel;
+			}else {this.angle -= this.rotVel;}
+			
+			
+		},
+		onDraw: function (context) {
+			this.rotate({ angle: (this.angle), then: function(c) {
+				c.drawImage(jsGFwk.ResourceManager.graphics.asteroide.image, 0, 0, 16, 16, 0, 0, 16, 16);						
+			}});
+		}
+	});
+	
+	jsGFwk.Container.createContainer("asteroid1Container", {
+		onInit: function (initializationParameters) {
+			jsGFwk.Effects.onObjectCreated(this);
+			this.x = initializationParameters.x;
+			this.y = initializationParameters.y;
+			this.width = 21;
+			this.height = 21;
+			this.angle = 0;
+			this.radius = 10;
+			this.rotationPoint =  { x: 11.5, y: 11.5 };
+			this.rotVel = initializationParameters.rotVel;
+			this.negRot = initializationParameters.negRot;
+		},
+		onUpdate: function (delta) {
+			
+			if 	(jsGFwk._gameObjects.retriever.isRectColliding(this)) {	
+				jsGFwk._gameObjects.retriever.hull = jsGFwk._gameObjects.retriever.hull + 20;
+				this.destroy();
+			}
+		
+			if (this.negRot <= 5){
+				if (this.rotVel < 6){
+					this.x += 0.5; 
+					
+				}else if (this.rotVel >= 6 && this.rotVel <= 12){
+					this.x += 1;
+				}else if (this.rotVel > 12){
+					this.x += 1.5;
+				}
+				
+				if (this.x >= 640){
+						this.x = 1;
+				}
+			}else {
+				if (this.rotVel < 4){
+					this.x -= 0.5; 
+					
+				}else if (this.rotVel >= 4 && this.rotVel <= 8){
+					this.x -= 1;
+				}else if (this.rotVel > 8){
+					this.x -= 1.5;
+				}
+				
+				if (this.x <= 0){
+						this.x = 639;
+				}
+			}
+			
+			
+			if (this.negRot <= 5){
+				this.angle += this.rotVel;
+			}else {this.angle -= this.rotVel;}
+		},
+		onDraw: function (context) {
+			this.rotate({ angle: (this.angle), then: function(c) {
+				c.drawImage(jsGFwk.ResourceManager.graphics.asteroide.image, 0, 17, 23, 23, 0, 0, 23, 23);	
+			}});
+		
+		}
+	});
+	
+	jsGFwk.Container.createContainer("asteroid2Container", {
+		onInit: function (initializationParameters) {
+			this.x = initializationParameters.x;
+			this.y = initializationParameters.y;
+			this.sizex = 32;
+			this.sizey = 32;
+			this.width = 30;
+			this.height = 30;
+			this.rotationPoint = { x: 16, y: 16 };
+			this.angle = 0;
+			this.rotVel = 0;
+			this.accel = 0.001;
+		},
+		onUpdate: function (delta) {
+			
+			if 	(jsGFwk._gameObjects.retriever.isRectColliding(this)) {
+			}
+				 this.x += 0.15; 
+			if (this.x >= 640){
+				this.x = 1;
+			}
+			
+			this.rotVel += this.accel;
+			this.angle += this.rotVel;
+			
+		},
+		onDraw: function (context) {
+			
+			context.drawImage(jsGFwk.ResourceManager.graphics.asteroide.image, 0, 43, 32, 32, this.x, this.y, this.sizex, this.sizey);	
+		}
+	});
+	
+	jsGFwk.Container.createContainer("asteroid3Container", {
+		onInit: function (initializationParameters) {
+			jsGFwk.Effects.onObjectCreated(this);
+			this.x = initializationParameters.x;
+			this.y = initializationParameters.y;
+			this.width = 14;
+			this.height = 14;
+			this.angle = 0;
+			this.rotationPoint =  { x: 8, y: 8 };
+			this.rotVel = initializationParameters.rotVel;
+			this.negRot = initializationParameters.negRot;
+			this.dis = initializationParameters.dis;
+			
+		},
+		onUpdate: function (delta) {
+			
+			if 	(jsGFwk._gameObjects.retriever.isRectColliding(this)) {
+				jsGFwk._gameObjects.retriever.hull = jsGFwk._gameObjects.retriever.hull + 10;
+				this.destroy();
+			}		
+			
+			if (this.negRot <= 5){
+				this.angle += this.rotVel;
+			}else {this.angle -= this.rotVel;}
+			
+			
+		},
+		onDraw: function (context) {
+			this.rotate({ angle: (this.angle), then: function(c) {
+				c.drawImage(jsGFwk.ResourceManager.graphics.asteroide.image, 0, 0, 16, 16, this.dis, this.dis, 16, 16);						
+			}});
+		}
+	});
+	
+	
+	/// Boxes
+	
+	jsGFwk.Container.createContainer("boxesContainer", {
+		onInit: function (initializationParameters) {
+			this.x = initializationParameters.x;
+			this.y = initializationParameters.y;
+			this.sizex = initializationParameters.sizex;
+			this.sizey = initializationParameters.sizey;
+			this.width = 12;
+			this.height = 13.5;
+			this.pickUp = 0;
+		},
+		onUpdate: function (delta) {
+			
+			if (this.pickUp == 0){
+				if (jsGFwk._gameObjects.retriever.isRectColliding(this)){
+					this.pickUp = 1;
+				}
+			}
+			
+			if (this.pickUp != 0){
+				this.x = jsGFwk._gameObjects.retriever.x - 5;
+				this.y = jsGFwk._gameObjects.retriever.y + 10;	
+			}
+			
+			if 	(jsGFwk._gameObjects.baseLander.isRectColliding(this)) {
+				this.destroy();
+				this.pickUp = 0;
+			}
+			
+				
+			console.log(this.pickUp);
+			
+		},
+		onDraw: function (context) {
+			context.drawImage(jsGFwk.ResourceManager.graphics.box.image, 0, 0, 16, 18, this.x, this.y, 10, 11);
+		}
+	});
+	
+	jsGFwk.createObject(asteroide);
+	jsGFwk.createObject(retriever);
+	
+	
+	
+	jsGFwk.start();
+
+	for (var i = 0; i < 20; i++) {
+			var rX = parseInt(Math.random() * 640);
+			var rY = parseInt(Math.random() * 480);
+		
+			jsGFwk._gameObjects.boxesContainer.cloneObject({x: rX, y: rY});
+		}
+
+
+	
+</script>
+</html>
